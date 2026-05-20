@@ -134,7 +134,14 @@ def split_documents(
     The resulting chunked Document objects use the configured chunk size and
     overlap while preserving the original document metadata.
     """
-    pass
+    # Aqui usamos los valores que llegaron de la configuracion, no numeros fijos.
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+    )
+
+    # LangChain se encarga de partir el texto y mantener los metadatos en cada chunk.
+    return text_splitter.split_documents(docs)
 
 
 def build_index(
