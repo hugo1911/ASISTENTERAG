@@ -215,7 +215,7 @@ def retrieve(
 
         chunk = chunks[int(chunk_index)]
 
-        # Regresamos lo importante: texto, score y metadatos del chunk encontrado
+        # Regresamos lo q mas importa y es texto, score y metadatos del chunk encontrado
         results.append(
             {
                 "text": chunk.page_content,
@@ -262,7 +262,30 @@ class Assistant:
         conversation messages, and the system prompt. The assistant response is
         appended to history alongside the user message.
         """
-        pass
+        search_k = k or self.top_k
+
+        # Antes de responder buscamos que pedazos de documentos tengan relacion con la pregunta
+        relevant_chunks = retrieve(
+            question,
+            self.index,
+            self.model,
+            self.chunks,
+            search_k,
+        )
+
+        # Por ahora solo regresamos el contexto recuperado y pues el LLM se conecta con la llamada al llm
+        if not relevant_chunks:
+            return "No encontre documentos relevantes para esa pregunta."
+
+        context_preview = []
+        for result in relevant_chunks:
+            metadata = result["metadata"]
+            context_preview.append(
+                f"[{result['score']:.3f}] {metadata['document_type']} - {metadata['path']}\n"
+                f"{result['text']}"
+            )
+
+        return "\n\n".join(context_preview)
 
     def clear_history(self) -> None:
         """Empties the conversation history."""
