@@ -141,7 +141,14 @@ def split_documents(
     )
 
     # LangChain se encarga de partir el texto y mantener los metadatos en cada chunk.
-    return text_splitter.split_documents(docs)
+    chunks = text_splitter.split_documents(docs)
+
+    # Revisamos rapido que cada pedacito siga sabiendo de que archivo salio
+    for chunk in chunks:
+        if "path" not in chunk.metadata or "document_type" not in chunk.metadata:
+            raise ValueError("Each chunk must preserve path and document_type metadata")
+
+    return chunks
 
 
 def build_index(
@@ -153,7 +160,23 @@ def build_index(
     The index contains normalized float32 embeddings generated from each
     chunk's text with the provided embedding model.
     """
-    pass
+    if not chunks:
+        raise ValueError("Cannot build a FAISS index without chunks")
+
+    texts = [chunk.page_content for chunk in chunks]
+
+    # Agregamos el embedding model de la configutacion
+    embeddings = embedding_model.encode(
+        texts,
+        convert_to_numpy=True,
+        normalize_embeddings=True,
+    ).astype("float32")
+
+    # Como los embeddings ya vienen normalizados usamos producto interno
+    index = faiss.IndexFlatIP(embeddings.shape[1])
+    index.add(embeddings)
+
+    return index
 
 
 def retrieve(
