@@ -8,10 +8,12 @@ Usage:
     python chat.py
 """
 
-import os
 import subprocess
+import os
 
-from rag import Assistant
+#Aqui quitamos la funcionn load_config_from_env porq creemos que tener todo centralizado en
+#rag.py nos facilita mas las cosas
+from rag import Assistant, load_config_from_env
 
 from dotenv import load_dotenv
 
@@ -25,19 +27,6 @@ WELCOME = """
 ║  Type '/exit' to leave.                              ║
 ╚══════════════════════════════════════════════════════╝
 """
-
-
-def load_config_from_env() -> dict[str, str | None]:
-    """Load raw RAG configuration values from environment variables."""
-    return {
-        "api_key": os.getenv("OPENAI_API_KEY"),
-        "base_url": os.getenv("OPENAI_BASE_URL"),
-        "model": os.getenv("MODEL"),
-        "embedding_model": os.getenv("EMBEDDING_MODEL"),
-        "top_k": os.getenv("TOP_K"),
-        "chunk_size": os.getenv("CHUNK_SIZE"),
-        "chunk_overlap": os.getenv("CHUNK_OVERLAP"),
-    }
 
 
 def main():

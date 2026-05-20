@@ -1,4 +1,4 @@
-# You might need the following imports. Feel free to change it if you opt for different libraries.
+from __future__ import annotations
 
 import os
 import glob as globmod
@@ -18,6 +18,27 @@ DEFAULT_CHUNK_SIZE = 256
 DEFAULT_CHUNK_OVERLAP = 32
 DEFAULT_TOP_K = 4
 
+ENV_OPENAI_API_KEY = "OPENAI_API_KEY"
+ENV_OPENAI_BASE_URL = "OPENAI_BASE_URL"
+ENV_LLM_MODEL = "LLM_MODEL"
+ENV_EMBEDDING_MODEL = "EMBEDDING_MODEL"
+ENV_TOP_K = "TOP_K"
+ENV_CHUNK_SIZE = "CHUNK_SIZE"
+ENV_CHUNK_OVERLAP = "CHUNK_OVERLAP"
+
+
+def load_config_from_env() -> dict[str, str | None]:
+    """Aqui Cargamos la configuracion de las variables de entorno"""
+    return {
+        "api_key": os.getenv(ENV_OPENAI_API_KEY),
+        "base_url": os.getenv(ENV_OPENAI_BASE_URL),
+        "model": os.getenv(ENV_LLM_MODEL),
+        "embedding_model": os.getenv(ENV_EMBEDDING_MODEL),
+        "top_k": os.getenv(ENV_TOP_K),
+        "chunk_size": os.getenv(ENV_CHUNK_SIZE),
+        "chunk_overlap": os.getenv(ENV_CHUNK_OVERLAP),
+    }
+
 
 def _parse_int_setting(name: str, value: Any) -> int:
     try:
@@ -26,27 +47,27 @@ def _parse_int_setting(name: str, value: Any) -> int:
         raise ValueError(f"{name} must be an integer; got {value!r}") from exc
     return parsed
 
-
+#Si una variable no existe se asigna un valor por defecto
 def resolve_config(config: dict[str, Any] | None = None) -> dict[str, Any]:
     """Resolves runtime configuration with defaults and typed settings."""
     config = config or {}
 
     resolved = {
-        "api_key": config.get("api_key", None),
-        "base_url": config.get("base_url", None),
-        "model": config.get("model", DEFAULT_LLM_MODEL),
-        "embedding_model": config.get("embedding_model", DEFAULT_EMBEDDING_MODEL),
+        "api_key": config.get("api_key") or None,
+        "base_url": config.get("base_url") or None,
+        "model": config.get("model") or DEFAULT_LLM_MODEL,
+        "embedding_model": config.get("embedding_model") or DEFAULT_EMBEDDING_MODEL,
         "top_k": _parse_int_setting(
-            "TOP_K",
-            config.get("top_k", DEFAULT_TOP_K),
+            ENV_TOP_K,
+            config.get("top_k") or DEFAULT_TOP_K,
         ),
         "chunk_size": _parse_int_setting(
-            "CHUNK_SIZE",
-            config.get("chunk_size", DEFAULT_CHUNK_SIZE),
+            ENV_CHUNK_SIZE,
+            config.get("chunk_size") or DEFAULT_CHUNK_SIZE,
         ),
         "chunk_overlap": _parse_int_setting(
-            "CHUNK_OVERLAP",
-            config.get("chunk_overlap", DEFAULT_CHUNK_OVERLAP),
+            ENV_CHUNK_OVERLAP,
+            config.get("chunk_overlap") or DEFAULT_CHUNK_OVERLAP,
         ),
     }
 
