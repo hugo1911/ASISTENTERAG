@@ -18,6 +18,14 @@ DEFAULT_CHUNK_SIZE = 256
 DEFAULT_CHUNK_OVERLAP = 32
 DEFAULT_TOP_K = 4
 
+# Aqui conectamos cada carpeta con el tipo de documento que representa
+DOCUMENT_FOLDERS = {
+    "emails": "email",
+    "notes": "note",
+    "sms": "sms",
+    "calendar": "calendar",
+}
+
 ENV_OPENAI_API_KEY = "OPENAI_API_KEY"
 ENV_OPENAI_BASE_URL = "OPENAI_BASE_URL"
 ENV_LLM_MODEL = "LLM_MODEL"
@@ -91,7 +99,29 @@ def load_documents(data_dir: str = DEFAULT_DATA_DIR) -> list[Document]:
     as `page_content` and includes metadata for the source file path and
     document type.
     """
-    pass
+    documents: list[Document] = []
+
+    for folder_name, document_type in DOCUMENT_FOLDERS.items():
+        # armamos la ruta para encontrar todos los .txt de esa carpeta
+        pattern = os.path.join(data_dir, folder_name, "*.txt")
+
+        for file_path in sorted(globmod.glob(pattern)):
+            # leemos el archivo completo y lo guardamos como contenido del Document
+            with open(file_path, "r", encoding="utf-8") as file:
+                text = file.read()
+
+            # guardamos tambien de donde salio y que tipo de documento es
+            documents.append(
+                Document(
+                    page_content=text,
+                    metadata={
+                        "path": file_path,
+                        "document_type": document_type,
+                    },
+                )
+            )
+
+    return documents
 
 
 def split_documents(
