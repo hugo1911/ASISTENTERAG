@@ -143,7 +143,7 @@ def split_documents(
     # LangChain se encarga de partir el texto y mantener los metadatos en cada chunk.
     chunks = text_splitter.split_documents(docs)
 
-    # Revisamos rapido que cada pedacito siga sabiendo de que archivo salio
+    # Revisamos rapido que cada pedacito siga sabiendo de que archivo salio:p
     for chunk in chunks:
         if "path" not in chunk.metadata or "document_type" not in chunk.metadata:
             raise ValueError("Each chunk must preserve path and document_type metadata")
@@ -191,7 +191,40 @@ def retrieve(
     Results are ordered by similarity and include the chunk text, similarity
     score, and metadata for each matching chunk.
     """
-    pass
+    if not query.strip():
+        return []
+
+    if not chunks or index.ntotal == 0:
+        return []
+
+    search_k = min(k, len(chunks), index.ntotal)
+
+    # Convertimos la pregunta en embedding para poder compararla contra FAISS
+    query_embedding = model.encode(
+        [query],
+        convert_to_numpy=True,
+        normalize_embeddings=True,
+    ).astype("float32")
+
+    scores, indices = index.search(query_embedding, search_k)
+    results: list[dict] = []
+
+    for score, chunk_index in zip(scores[0], indices[0]):
+        if chunk_index < 0:
+            continue
+
+        chunk = chunks[int(chunk_index)]
+
+        # Regresamos lo importante: texto, score y metadatos del chunk encontrado
+        results.append(
+            {
+                "text": chunk.page_content,
+                "score": float(score),
+                "metadata": chunk.metadata,
+            }
+        )
+
+    return results
 
 
 SYSTEM_PROMPT = ""
