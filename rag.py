@@ -319,6 +319,12 @@ class Assistant:
         context = format_context(relevant_chunks)
         messages = build_messages(question, context, self.history)
 
+
+        # guardar historial conversacional
+        # guardamos pregunta y respuesta para los siguientes turnos
+        self.history.append({"role": "user", "content": question})
+        self.history.append({"role": "assistant", "content": answer})
+
         # Por ahora regresamos el prompt armado; la llamada al modelo va en el siguiente paso.
         return messages[-1]["content"]
 
