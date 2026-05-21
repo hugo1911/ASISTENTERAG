@@ -319,6 +319,19 @@ class Assistant:
         context = format_context(relevant_chunks)
         messages = build_messages(question, context, self.history)
 
+         # Aqui llamamos al LLM 
+        completion = self.client.chat.completions.create(
+            model=self.llm_model,
+            messages=messages,
+            temperature=0.2,
+        )
+
+        answer = completion.choices[0].message.content
+
+        if not answer:
+            answer = "No tengo suficiente información en los documentos para responder eso."
+
+
 
         # guardar historial conversacional
         # guardamos pregunta y respuesta para los siguientes turnos
