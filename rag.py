@@ -227,7 +227,47 @@ def retrieve(
     return results
 
 
-SYSTEM_PROMPT = ""
+SYSTEM_PROMPT = (
+    "Eres un asistente personal que responde usando solo el contexto recuperado "
+    "de emails, notas, SMS y calendario. Si el contexto no alcanza para responder, "
+    "debes decir que no tienes suficiente informacion."
+)
+
+
+def format_context(results: list[dict]) -> str:
+    # Ponemos los chunks recuperados en un formato facil de meter al prompt.
+    context_parts = []
+
+    for result in results:
+        metadata = result["metadata"]
+        context_parts.append(
+            f"Fuente: {metadata['document_type']} - {metadata['path']}\n"
+            f"Score: {result['score']:.3f}\n"
+            f"Texto:\n{result['text']}"
+        )
+
+    return "\n\n---\n\n".join(context_parts)
+
+
+def build_messages(
+        question: str,
+        context: str,
+        history: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    # Juntamos sistema, historial y pregunta actual con su contexto.
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages.extend(history)
+    messages.append(
+        {
+            "role": "user",
+            "content": (
+                f"Contexto recuperado:\n{context}\n\n"
+                f"Pregunta actual:\n{question}"
+            ),
+        }
+    )
+
+    return messages
 
 
 class Assistant:
@@ -273,19 +313,14 @@ class Assistant:
             search_k,
         )
 
-        # Por ahora solo regresamos el contexto recuperado y pues el LLM se conecta con la llamada al llm
         if not relevant_chunks:
             return "No encontre documentos relevantes para esa pregunta."
 
-        context_preview = []
-        for result in relevant_chunks:
-            metadata = result["metadata"]
-            context_preview.append(
-                f"[{result['score']:.3f}] {metadata['document_type']} - {metadata['path']}\n"
-                f"{result['text']}"
-            )
+        context = format_context(relevant_chunks)
+        messages = build_messages(question, context, self.history)
 
-        return "\n\n".join(context_preview)
+        # Por ahora regresamos el prompt armado; la llamada al modelo va en el siguiente paso.
+        return messages[-1]["content"]
 
     def clear_history(self) -> None:
         """Empties the conversation history."""
