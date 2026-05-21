@@ -314,7 +314,7 @@ class Assistant:
         )
 
         if not relevant_chunks:
-            return "No encontre documentos relevantes para esa pregunta."
+            return "No tengo suficiente información en los documentos para responder eso."
 
         context = format_context(relevant_chunks)
         messages = build_messages(question, context, self.history)
